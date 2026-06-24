@@ -31,12 +31,7 @@ export type ListarResponse = {
   tamanhoPagina: number;
 };
 
-  message?: string;
-  dispositivos: Dispositivo[];
-  total: number;
-  pagina: number;
-  tamanhoPagina: number;
-};
+
 
 export const listarDispositivos = createServerFn({ method: "POST" })
   .inputValidator((data) => InputSchema.parse(data))
