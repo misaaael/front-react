@@ -45,7 +45,7 @@ function Index() {
           origem: nextOrigem,
         },
       });
-      setResult(data);
+      setResult(data as ListarResponse);
       setSubmitted(true);
     } finally {
       setLoading(false);
