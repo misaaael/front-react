@@ -159,11 +159,13 @@ export const listarDispositivos = createServerFn({ method: "POST" })
         ok: false,
         status: 0,
         message:
-          "Não foi possível conectar à API da Intelbras. Verifique sua conexão e tente novamente.",
+          "Não foi possível conectar à API da Intelbras. Verifique sua conexão de internet e tente novamente.",
+        errorCode: "network",
         dispositivos: [],
         total: 0,
         pagina: data.pagina,
         tamanhoPagina: data.tamanhoPagina,
       };
     }
+
   });
