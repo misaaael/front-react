@@ -18,9 +18,19 @@ type JsonValue =
 
 export type Dispositivo = { [k: string]: JsonValue };
 
+export type ErrorCode = "unauthorized" | "network" | "server" | "unexpected";
+
 export type ListarResponse = {
   ok: boolean;
   status: number;
+  message?: string;
+  errorCode?: ErrorCode;
+  dispositivos: Dispositivo[];
+  total: number;
+  pagina: number;
+  tamanhoPagina: number;
+};
+
   message?: string;
   dispositivos: Dispositivo[];
   total: number;
