@@ -479,11 +479,25 @@ function EmptyState() {
 
 function ErrorState({
   message,
+  code,
   onRetry,
+  onReset,
 }: {
   message: string;
+  code?: "unauthorized" | "network" | "server" | "unexpected";
   onRetry: () => void;
+  onReset: () => void;
 }) {
+  const title =
+    code === "unauthorized"
+      ? "Token inválido ou expirado"
+      : code === "network"
+        ? "Falha de conexão com a API"
+        : code === "server"
+          ? "API da Intelbras indisponível"
+          : code === "unexpected"
+            ? "Resposta inesperada da API"
+            : "Não foi possível listar os dispositivos";
   return (
     <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
       <div className="flex items-start gap-3">
@@ -491,21 +505,30 @@ function ErrorState({
           !
         </div>
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-foreground">
-            Não foi possível listar os dispositivos
-          </h3>
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
           <p className="mt-1 text-sm text-muted-foreground">{message}</p>
-          <button
-            onClick={onRetry}
-            className="mt-3 inline-flex items-center rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-accent"
-          >
-            Tentar novamente
-          </button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {code !== "unauthorized" && (
+              <button
+                onClick={onRetry}
+                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-accent"
+              >
+                Tentar novamente
+              </button>
+            )}
+            <button
+              onClick={onReset}
+              className="inline-flex items-center rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-brand-foreground transition hover:opacity-95"
+            >
+              {code === "unauthorized" ? "Informar novo token" : "Trocar token"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
 
 function Spinner() {
   return (
