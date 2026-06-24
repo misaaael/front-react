@@ -284,8 +284,14 @@ function Results({
       </div>
 
       {!result?.ok ? (
-        <ErrorState message={result?.message ?? "Erro desconhecido."} onRetry={onRefresh} />
+        <ErrorState
+          message={result?.message ?? "Erro desconhecido."}
+          code={result?.errorCode}
+          onRetry={onRefresh}
+          onReset={onReset}
+        />
       ) : dispositivos.length === 0 ? (
+
         <EmptyState />
       ) : (
         <DeviceGrid devices={dispositivos} />
