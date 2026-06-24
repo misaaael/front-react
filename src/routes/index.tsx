@@ -1,11 +1,12 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
-  listarDispositivos,
-  type Dispositivo,
-  type ListarResponse,
-} from "@/lib/intelbras.functions";
+  listDevices,
+  type Device,
+  type ListDevicesResponse,
+  type Origin,
+  type ErrorCode,
+} from "@/services/devicesApi";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -14,38 +15,33 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Consulte os dispositivos vinculados à sua conta Open Casa Inteligente da Intelbras.",
+          "Console para listar dispositivos da plataforma Open Casa Inteligente.",
       },
     ],
   }),
   component: Index,
 });
 
-type Origem = "todos" | "vinculados" | "compartilhados";
-
 function Index() {
-  const fetchDispositivos = useServerFn(listarDispositivos);
   const [token, setToken] = useState("");
-  const [origem, setOrigem] = useState<Origem>("todos");
-  const [pagina, setPagina] = useState(1);
-  const [tamanhoPagina, setTamanhoPagina] = useState(20);
+  const [origin, setOrigin] = useState<Origin>("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ListarResponse | null>(null);
+  const [result, setResult] = useState<ListDevicesResponse | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  async function run(nextPagina = pagina, nextOrigem = origem, nextSize = tamanhoPagina) {
+  async function run(nextPage = page, nextOrigin = origin, nextSize = pageSize) {
     if (!token.trim()) return;
     setLoading(true);
     try {
-      const data = await fetchDispositivos({
-        data: {
-          token: token.trim(),
-          pagina: nextPagina,
-          tamanhoPagina: nextSize,
-          origem: nextOrigem,
-        },
+      const data = await listDevices({
+        token: token.trim(),
+        page: nextPage,
+        pageSize: nextSize,
+        origin: nextOrigin,
       });
-      setResult(data as ListarResponse);
+      setResult(data);
       setSubmitted(true);
     } finally {
       setLoading(false);
@@ -54,15 +50,15 @@ function Index() {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setPagina(1);
-    run(1, origem, tamanhoPagina);
+    setPage(1);
+    run(1, origin, pageSize);
   }
 
   function reset() {
     setSubmitted(false);
     setResult(null);
     setToken("");
-    setPagina(1);
+    setPage(1);
   }
 
   return (
@@ -80,24 +76,24 @@ function Index() {
           <Results
             result={result}
             loading={loading}
-            origem={origem}
-            pagina={pagina}
-            tamanhoPagina={tamanhoPagina}
-            onChangeOrigem={(o) => {
-              setOrigem(o);
-              setPagina(1);
-              run(1, o, tamanhoPagina);
+            origin={origin}
+            page={page}
+            pageSize={pageSize}
+            onChangeOrigin={(o) => {
+              setOrigin(o);
+              setPage(1);
+              run(1, o, pageSize);
             }}
-            onChangePagina={(p) => {
-              setPagina(p);
-              run(p, origem, tamanhoPagina);
+            onChangePage={(p) => {
+              setPage(p);
+              run(p, origin, pageSize);
             }}
-            onChangeTamanho={(t) => {
-              setTamanhoPagina(t);
-              setPagina(1);
-              run(1, origem, t);
+            onChangePageSize={(t) => {
+              setPageSize(t);
+              setPage(1);
+              run(1, origin, t);
             }}
-            onRefresh={() => run(pagina, origem, tamanhoPagina)}
+            onRefresh={() => run(page, origin, pageSize)}
             onReset={reset}
           />
         )}
@@ -180,7 +176,7 @@ function TokenForm({
             required
           />
           <p className="text-xs text-muted-foreground">
-            Seu token é enviado apenas para a API da Intelbras e não é armazenado.
+            O token fica apenas em memória neste navegador e é enviado somente para o backend configurado.
           </p>
         </div>
 
@@ -205,30 +201,30 @@ function TokenForm({
 function Results({
   result,
   loading,
-  origem,
-  pagina,
-  tamanhoPagina,
-  onChangeOrigem,
-  onChangePagina,
-  onChangeTamanho,
+  origin,
+  page,
+  pageSize,
+  onChangeOrigin,
+  onChangePage,
+  onChangePageSize,
   onRefresh,
   onReset,
 }: {
-  result: ListarResponse | null;
+  result: ListDevicesResponse | null;
   loading: boolean;
-  origem: Origem;
-  pagina: number;
-  tamanhoPagina: number;
-  onChangeOrigem: (o: Origem) => void;
-  onChangePagina: (p: number) => void;
-  onChangeTamanho: (t: number) => void;
+  origin: Origin;
+  page: number;
+  pageSize: number;
+  onChangeOrigin: (o: Origin) => void;
+  onChangePage: (p: number) => void;
+  onChangePageSize: (t: number) => void;
   onRefresh: () => void;
   onReset: () => void;
 }) {
-  const dispositivos = result?.dispositivos ?? [];
+  const devices = result?.devices ?? [];
   const totalPaginas = Math.max(
     1,
-    Math.ceil((result?.total ?? dispositivos.length) / tamanhoPagina),
+    Math.ceil((result?.total ?? devices.length) / pageSize),
   );
 
   return (
@@ -240,7 +236,7 @@ function Results({
           </h1>
           <p className="text-sm text-muted-foreground">
             {result?.ok
-              ? `${dispositivos.length} item(ns) exibidos${
+              ? `${devices.length} item(ns) exibidos${
                   result.total ? ` • ${result.total} no total` : ""
                 }`
               : "Erro ao consultar a API"}
@@ -264,13 +260,13 @@ function Results({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-3">
-        <FilterChips origem={origem} onChange={onChangeOrigem} />
+        <FilterChips origin={origin} onChange={onChangeOrigin} />
         <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
           <label htmlFor="size">Itens por página</label>
           <select
             id="size"
-            value={tamanhoPagina}
-            onChange={(e) => onChangeTamanho(Number(e.target.value))}
+            value={pageSize}
+            onChange={(e) => onChangePageSize(Number(e.target.value))}
             className="rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground"
           >
             {[10, 20, 50].map((n) => (
@@ -278,7 +274,6 @@ function Results({
                 {n}
               </option>
             ))}
-
           </select>
         </div>
       </div>
@@ -290,18 +285,17 @@ function Results({
           onRetry={onRefresh}
           onReset={onReset}
         />
-      ) : dispositivos.length === 0 ? (
-
+      ) : devices.length === 0 ? (
         <EmptyState />
       ) : (
-        <DeviceGrid devices={dispositivos} />
+        <DeviceGrid devices={devices} />
       )}
 
-      {result?.ok && dispositivos.length > 0 && (
+      {result?.ok && devices.length > 0 && (
         <Pagination
-          pagina={pagina}
-          totalPaginas={totalPaginas}
-          onChange={onChangePagina}
+          page={page}
+          totalPages={totalPaginas}
+          onChange={onChangePage}
           disabled={loading}
         />
       )}
@@ -310,21 +304,21 @@ function Results({
 }
 
 function FilterChips({
-  origem,
+  origin,
   onChange,
 }: {
-  origem: Origem;
-  onChange: (o: Origem) => void;
+  origin: Origin;
+  onChange: (o: Origin) => void;
 }) {
-  const opts: { value: Origem; label: string }[] = [
-    { value: "todos", label: "Todos" },
-    { value: "vinculados", label: "Vinculados" },
-    { value: "compartilhados", label: "Compartilhados" },
+  const opts: { value: Origin; label: string }[] = [
+    { value: "all", label: "Todos" },
+    { value: "linked", label: "Vinculados" },
+    { value: "shared", label: "Compartilhados" },
   ];
   return (
     <div className="flex flex-wrap gap-1.5">
       {opts.map((o) => {
-        const active = origem === o.value;
+        const active = origin === o.value;
         return (
           <button
             key={o.value}
@@ -344,7 +338,7 @@ function FilterChips({
   );
 }
 
-function DeviceGrid({ devices }: { devices: Dispositivo[] }) {
+function DeviceGrid({ devices }: { devices: Device[] }) {
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {devices.map((d, i) => (
@@ -354,16 +348,16 @@ function DeviceGrid({ devices }: { devices: Dispositivo[] }) {
   );
 }
 
-function DeviceCard({ device }: { device: Dispositivo }) {
-  const nome =
+function DeviceCard({ device }: { device: Device }) {
+  const name =
+    (device.name as string) ||
     (device.nome as string) ||
-    (device.nomeDispositivo as string) ||
-    (device.descricao as string) ||
+    (device.description as string) ||
     "Dispositivo sem nome";
-  const modelo =
+  const model =
+    (device.model as string) ||
     (device.modelo as string) ||
-    (device.modeloDispositivo as string) ||
-    (device.tipo as string) ||
+    (device.type as string) ||
     "—";
   const mac = (device.mac as string) || (device.macAddress as string) || "";
   const isOnline =
@@ -371,9 +365,10 @@ function DeviceCard({ device }: { device: Dispositivo }) {
     device.status === "online" ||
     device.estado === "online";
   const isShared =
+    device.shared === true ||
     device.compartilhado === true ||
-    (typeof device.origem === "string" &&
-      (device.origem as string).toLowerCase().includes("compart"));
+    (typeof device.origin === "string" &&
+      (device.origin as string).toLowerCase().includes("shar"));
 
   return (
     <li className="group rounded-xl border border-border bg-card p-4 transition hover:border-brand/60 hover:shadow-sm">
@@ -394,10 +389,10 @@ function DeviceCard({ device }: { device: Dispositivo }) {
         </span>
       </div>
       <div className="mt-3">
-        <h3 className="truncate text-sm font-semibold text-foreground" title={nome}>
-          {nome}
+        <h3 className="truncate text-sm font-semibold text-foreground" title={name}>
+          {name}
         </h3>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">{modelo}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">{model}</p>
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-[11px] text-muted-foreground">
         <span className="font-mono">{mac || "—"}</span>
@@ -427,32 +422,32 @@ function DeviceIcon() {
 }
 
 function Pagination({
-  pagina,
-  totalPaginas,
+  page,
+  totalPages,
   onChange,
   disabled,
 }: {
-  pagina: number;
-  totalPaginas: number;
+  page: number;
+  totalPages: number;
   onChange: (p: number) => void;
   disabled: boolean;
 }) {
   return (
     <div className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2 text-sm">
       <button
-        onClick={() => onChange(Math.max(1, pagina - 1))}
-        disabled={disabled || pagina <= 1}
+        onClick={() => onChange(Math.max(1, page - 1))}
+        disabled={disabled || page <= 1}
         className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
       >
         ← Anterior
       </button>
       <span className="text-xs text-muted-foreground">
-        Página <span className="font-semibold text-foreground">{pagina}</span> de{" "}
-        {totalPaginas}
+        Página <span className="font-semibold text-foreground">{page}</span> de{" "}
+        {totalPages}
       </span>
       <button
-        onClick={() => onChange(pagina + 1)}
-        disabled={disabled || pagina >= totalPaginas}
+        onClick={() => onChange(page + 1)}
+        disabled={disabled || page >= totalPages}
         className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
       >
         Próxima →
@@ -484,7 +479,7 @@ function ErrorState({
   onReset,
 }: {
   message: string;
-  code?: "unauthorized" | "network" | "server" | "unexpected";
+  code?: ErrorCode;
   onRetry: () => void;
   onReset: () => void;
 }) {
@@ -492,11 +487,11 @@ function ErrorState({
     code === "unauthorized"
       ? "Token inválido ou expirado"
       : code === "network"
-        ? "Falha de conexão com a API"
+        ? "Falha de conexão com o backend"
         : code === "server"
-          ? "API da Intelbras indisponível"
+          ? "Backend indisponível"
           : code === "unexpected"
-            ? "Resposta inesperada da API"
+            ? "Resposta inesperada do backend"
             : "Não foi possível listar os dispositivos";
   return (
     <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
@@ -528,7 +523,6 @@ function ErrorState({
     </div>
   );
 }
-
 
 function Spinner() {
   return (
