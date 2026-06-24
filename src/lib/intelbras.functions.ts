@@ -8,16 +8,15 @@ const InputSchema = z.object({
   origem: z.enum(["todos", "vinculados", "compartilhados"]).default("todos"),
 });
 
-export type Dispositivo = {
-  id?: string | number;
-  nome?: string;
-  modelo?: string;
-  tipo?: string;
-  mac?: string;
-  online?: boolean;
-  compartilhado?: boolean;
-  [k: string]: unknown;
-};
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [k: string]: JsonValue };
+
+export type Dispositivo = { [k: string]: JsonValue };
 
 export type ListarResponse = {
   ok: boolean;
