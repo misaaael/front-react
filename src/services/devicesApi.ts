@@ -100,8 +100,7 @@ export async function listDevices(
     }
 
     const r = (payload ?? {}) as Record<string, unknown>;
-    const devices = (Array.isArray(r.devices) ? r.devices : []) as Device[];
-    const total = typeof r.total === "number" ? r.total : devices.length;
+const devices = (Array.isArray(r.devices) ? r.devices : Array.isArray(r.items) ? r.items : []) as Device[];    const total = typeof r.total === "number" ? r.total : devices.length;
 
     return {
       ok: true,
