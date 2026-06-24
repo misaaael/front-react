@@ -273,11 +273,12 @@ function Results({
             onChange={(e) => onChangeTamanho(Number(e.target.value))}
             className="rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground"
           >
-            {[10, 20, 50, 100].map((n) => (
+            {[10, 20, 50].map((n) => (
               <option key={n} value={n}>
                 {n}
               </option>
             ))}
+
           </select>
         </div>
       </div>
