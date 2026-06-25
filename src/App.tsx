@@ -18,7 +18,9 @@ export default function App() {
 
   async function run(nextPage = page, nextOrigin = origin, nextSize = pageSize) {
     if (!token.trim()) return;
+
     setLoading(true);
+
     try {
       const data = await listDevices({
         token: token.trim(),
@@ -26,6 +28,10 @@ export default function App() {
         pageSize: nextSize,
         origin: nextOrigin,
       });
+
+      console.log("DATA:", data);
+      console.log("DEVICES:", data.devices?.length);
+
       setResult(data);
       setSubmitted(true);
     } finally {
