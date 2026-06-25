@@ -1,138 +1,67 @@
-# Frontend React — Casa Inteligente
+# Frontend - Case Técnico Intelbras
 
-Interface web desenvolvida em React para o case técnico da Intelbras.
+Frontend desenvolvido em React + Vite.
 
-A aplicação permite que o usuário informe um token temporário da plataforma Open Casa Inteligente e visualize os dispositivos associados à sua conta por meio do backend desenvolvido em Django.
+> Este repositório contém apenas a interface da aplicação.
+>
+> Para documentação completa, arquitetura e infraestrutura da solução, consulte:
+>
+> **https://github.com/misaaael/case-intelbras**
+
+---
 
 ## Tecnologias
 
-* React 19
-* TypeScript
-* Vite
-* TanStack Router
-* Tailwind CSS
-* ESLint
-* Prettier
+- React
+- TypeScript
+- Vite
 
-## Funcionalidades
+---
 
-* Consulta de dispositivos via backend
-* Integração com a API real da Intelbras
-* Filtro por origem:
+## Estrutura
 
-  * Todos
-  * Vinculados
-  * Compartilhados
-* Paginação
-* Alteração da quantidade de itens por página
-* Estados da interface:
-
-  * carregando
-  * lista vazia
-  * token inválido
-  * erro de comunicação
-  * backend indisponível
-* Atualização manual da consulta
-* Troca de token
-
-## Estrutura do projeto
-
-```text
-src/
-├── routes/
-├── services/
-│   └── devicesApi.ts
-├── components/
-└── ...
+```
+frontend/
+├── src/
+├── Dockerfile
+├── package.json
+└── vite.config.ts
 ```
 
-## Variáveis de ambiente
+---
 
-Crie um arquivo `.env` na raiz do projeto:
+## Executando individualmente
 
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-## Como executar
-
-Instale as dependências:
+### Desenvolvimento
 
 ```bash
 npm install
-```
 
-Execute em modo de desenvolvimento:
-
-```bash
 npm run dev
 ```
 
-A aplicação ficará disponível em:
-
-```text
-http://localhost:5173
-```
-
-## Scripts
+### Docker
 
 ```bash
-npm run dev
-npm run build
-npm run preview
-npm run lint
-npm run format
+docker build -t frontend-react .
+
+docker run -p 5173:5173 frontend-react
 ```
 
-## Comunicação com o backend
+---
 
-Todas as requisições são centralizadas em:
+## Comunicação
 
-```text
-src/services/devicesApi.ts
+O frontend consome a API do backend através da variável:
+
+```
+VITE_API_BASE_URL
 ```
 
-O frontend envia requisições para:
+---
 
-```http
-POST /api/devices/
-```
+## Documentação
 
-Payload:
+Documentação completa da solução:
 
-```json
-{
-  "token": "...",
-  "page": 1,
-  "pageSize": 20,
-  "origin": "all"
-}
-```
-
-Resposta esperada:
-
-```json
-{
-  "ok": true,
-  "items": [],
-  "page": 1,
-  "pageSize": 20,
-  "hasNextPage": true
-}
-```
-
-## Decisões técnicas
-
-A interface foi construída desacoplada da API externa. Toda a comunicação acontece exclusivamente com o backend Django, que normaliza os dados retornados pela API da Intelbras.
-
-Como a API não informa o número total de dispositivos, a navegação utiliza o campo `hasNextPage` fornecido pelo backend para controlar a paginação sem exibir totais incorretos.
-
-## Melhorias futuras
-
-* Testes automatizados dos componentes
-* Melhorias de acessibilidade (ARIA)
-* Internacionalização
-* Tema claro/escuro
-* Virtualização para listas muito grandes
-* Docker para desenvolvimento
-* Deploy automatizado
+https://github.com/misaaael/case-intelbras
