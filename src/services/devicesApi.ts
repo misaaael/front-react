@@ -31,7 +31,8 @@ export type ListDevicesResponse = {
 };
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true" || !API_BASE_URL;
+const API_URL = API_BASE_URL ? `${API_BASE_URL}/api/devices/` : "/api/devices/";
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 export async function listDevices(req: ListDevicesRequest): Promise<ListDevicesResponse> {
   if (USE_MOCK) {
@@ -39,7 +40,7 @@ export async function listDevices(req: ListDevicesRequest): Promise<ListDevicesR
   }
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/devices/`, {
+    const res = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
