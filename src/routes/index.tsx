@@ -15,8 +15,7 @@ export const Route = createFileRoute("/")({
       { title: "Casa Inteligente • Dispositivos" },
       {
         name: "description",
-        content:
-          "Console para listar dispositivos da plataforma Open Casa Inteligente.",
+        content: "Console para listar dispositivos da plataforma Open Casa Inteligente.",
       },
     ],
   }),
@@ -67,12 +66,7 @@ function Index() {
       <Header />
       <main className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
         {!submitted ? (
-          <TokenForm
-            token={token}
-            setToken={setToken}
-            loading={loading}
-            onSubmit={onSubmit}
-          />
+          <TokenForm token={token} setToken={setToken} loading={loading} onSubmit={onSubmit} />
         ) : (
           <Results
             result={result}
@@ -112,19 +106,23 @@ function Header() {
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand text-brand-foreground">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M3 11l9-8 9 8" />
               <path d="M5 10v10h14V10" />
               <path d="M10 20v-6h4v6" />
             </svg>
           </div>
           <div>
-            <p className="text-sm font-semibold leading-tight text-foreground">
-              Casa Inteligente
-            </p>
-            <p className="text-xs text-muted-foreground leading-tight">
-              Console de dispositivos
-            </p>
+            <p className="text-sm font-semibold leading-tight text-foreground">Casa Inteligente</p>
+            <p className="text-xs text-muted-foreground leading-tight">Console de dispositivos</p>
           </div>
         </div>
         <span className="rounded-full border border-border bg-brand-soft px-3 py-1 text-xs font-medium text-foreground">
@@ -154,8 +152,8 @@ function TokenForm({
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Cole o <span className="font-medium text-foreground">token temporário</span> gerado em{" "}
-          <span className="font-mono text-xs">Contas → Token Temporário</span> na
-          plataforma Open Casa Inteligente.
+          <span className="font-mono text-xs">Contas → Token Temporário</span> na plataforma Open
+          Casa Inteligente.
         </p>
       </div>
 
@@ -177,7 +175,8 @@ function TokenForm({
             required
           />
           <p className="text-xs text-muted-foreground">
-            O token fica apenas em memória neste navegador e é enviado somente para o backend configurado.
+            O token fica apenas em memória neste navegador e é enviado somente para o backend
+            configurado.
           </p>
         </div>
 
@@ -223,10 +222,7 @@ function Results({
   onReset: () => void;
 }) {
   const devices = result?.devices ?? [];
-  const totalPaginas = Math.max(
-    1,
-    Math.ceil((result?.total ?? devices.length) / pageSize),
-  );
+  const totalPaginas = Math.max(1, Math.ceil((result?.total ?? devices.length) / pageSize));
 
   return (
     <div className="space-y-6">
@@ -304,13 +300,7 @@ function Results({
   );
 }
 
-function FilterChips({
-  origin,
-  onChange,
-}: {
-  origin: Origin;
-  onChange: (o: Origin) => void;
-}) {
+function FilterChips({ origin, onChange }: { origin: Origin; onChange: (o: Origin) => void }) {
   const opts: { value: Origin; label: string }[] = [
     { value: "all", label: "Todos" },
     { value: "linked", label: "Vinculados" },
@@ -349,27 +339,56 @@ function DeviceGrid({ devices }: { devices: Device[] }) {
   );
 }
 
+function formatIntelbrasDate(value?: string) {
+  if (!value) return "—";
+
+  const formatted = value.replace(
+    /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/,
+    "$1-$2-$3T$4:$5:$6Z",
+  );
+
+  const date = new Date(formatted);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function formatOrigin(origin?: string, isShared?: boolean) {
+  if (origin === "compartilhado") return "Compartilhado";
+  if (origin === "vinculado") return "Vinculado";
+  if (isShared) return "Compartilhado";
+  return "Vinculado";
+}
+
 function DeviceCard({ device }: { device: Device }) {
   const name =
     (device.name as string) ||
     (device.nome as string) ||
     (device.description as string) ||
     "Dispositivo sem nome";
+
   const model =
-    (device.model as string) ||
-    (device.modelo as string) ||
-    (device.type as string) ||
-    "—";
+    (device.model as string) || (device.modelo as string) || (device.type as string) || "—";
+
   const mac = (device.mac as string) || (device.macAddress as string) || "";
+  const version = (device.version as string) || "";
+  const lastOnlineAt = (device.lastOnlineAt as string) || "";
+  const origin = (device.origin as string) || "";
+
   const isOnline =
-    device.online === true ||
-    device.status === "online" ||
-    device.estado === "online";
+    device.online === true || device.status === "online" || device.estado === "online";
+
   const isShared =
     device.shared === true ||
     device.compartilhado === true ||
-    (typeof device.origin === "string" &&
-      (device.origin as string).toLowerCase().includes("shar"));
+    origin.toLowerCase() === "compartilhado" ||
+    origin.toLowerCase().includes("shar");
 
   return (
     <li className="group rounded-xl border border-border bg-card p-4 transition hover:border-brand/60 hover:shadow-sm">
@@ -380,32 +399,41 @@ function DeviceCard({ device }: { device: Device }) {
         <span
           className={
             "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide " +
-            (isOnline
-              ? "bg-success/15 text-foreground"
-              : "bg-muted text-muted-foreground")
+            (isOnline ? "bg-success/15 text-foreground" : "bg-muted text-muted-foreground")
           }
           style={{ color: isOnline ? "var(--success)" : undefined }}
         >
           {isOnline ? "● Online" : "○ Offline"}
         </span>
       </div>
+
       <div className="mt-3">
         <h3 className="truncate text-sm font-semibold text-foreground" title={name}>
           {name}
         </h3>
+
         <p className="mt-0.5 truncate text-xs text-muted-foreground">{model}</p>
+
+        <div className="mt-3 space-y-1 text-[11px] text-muted-foreground">
+          <p>
+            Firmware: <span className="font-medium text-foreground">{version || "—"}</span>
+          </p>
+          <p>
+            Último acesso:{" "}
+            <span className="font-medium text-foreground">{formatIntelbrasDate(lastOnlineAt)}</span>
+          </p>
+        </div>
       </div>
+
       <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-[11px] text-muted-foreground">
         <span className="font-mono">{mac || "—"}</span>
         <span
           className={
             "rounded px-1.5 py-0.5 " +
-            (isShared
-              ? "bg-accent text-accent-foreground"
-              : "bg-brand-soft text-foreground")
+            (isShared ? "bg-accent text-accent-foreground" : "bg-brand-soft text-foreground")
           }
         >
-          {isShared ? "Compartilhado" : "Vinculado"}
+          {formatOrigin(origin, isShared)}
         </span>
       </div>
     </li>
@@ -414,7 +442,15 @@ function DeviceCard({ device }: { device: Device }) {
 
 function DeviceIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="3" y="4" width="18" height="12" rx="2" />
       <path d="M8 20h8" />
       <path d="M12 16v4" />
@@ -443,8 +479,7 @@ function Pagination({
         ← Anterior
       </button>
       <span className="text-xs text-muted-foreground">
-        Página <span className="font-semibold text-foreground">{page}</span> de{" "}
-        {totalPages}
+        Página <span className="font-semibold text-foreground">{page}</span> de {totalPages}
       </span>
       <button
         onClick={() => onChange(page + 1)}
@@ -463,9 +498,7 @@ function EmptyState() {
       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-foreground">
         <DeviceIcon />
       </div>
-      <h3 className="text-sm font-semibold text-foreground">
-        Nenhum dispositivo encontrado
-      </h3>
+      <h3 className="text-sm font-semibold text-foreground">Nenhum dispositivo encontrado</h3>
       <p className="mt-1 text-xs text-muted-foreground">
         Esta conta ainda não possui dispositivos vinculados ou compartilhados.
       </p>
@@ -494,6 +527,7 @@ function ErrorState({
           : code === "unexpected"
             ? "Resposta inesperada do backend"
             : "Não foi possível listar os dispositivos";
+
   return (
     <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
       <div className="flex items-start gap-3">
@@ -529,7 +563,12 @@ function Spinner() {
   return (
     <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4" />
-      <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+      <path
+        d="M22 12a10 10 0 0 1-10 10"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

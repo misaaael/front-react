@@ -42,12 +42,9 @@ export type ListDevicesResponse = {
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
 // Habilite VITE_USE_MOCK=true (ou deixe sem VITE_API_BASE_URL) para usar mock.
-const USE_MOCK =
-  import.meta.env.VITE_USE_MOCK === "true" || !API_BASE_URL;
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true" || !API_BASE_URL;
 
-export async function listDevices(
-  req: ListDevicesRequest,
-): Promise<ListDevicesResponse> {
+export async function listDevices(req: ListDevicesRequest): Promise<ListDevicesResponse> {
   if (USE_MOCK) {
     return mockListDevices(req);
   }
@@ -75,8 +72,7 @@ export async function listDevices(
       let message: string;
       if (res.status === 401 || res.status === 403) {
         errorCode = "unauthorized";
-        message =
-          "Token inválido ou expirado. Gere um novo token e tente novamente.";
+        message = "Token inválido ou expirado. Gere um novo token e tente novamente.";
       } else if (res.status >= 500) {
         errorCode = "server";
         message = `Backend indisponível (HTTP ${res.status}). Tente novamente em instantes.`;
@@ -100,7 +96,10 @@ export async function listDevices(
     }
 
     const r = (payload ?? {}) as Record<string, unknown>;
-const devices = (Array.isArray(r.devices) ? r.devices : Array.isArray(r.items) ? r.items : []) as Device[];    const total = typeof r.total === "number" ? r.total : devices.length;
+    const devices = (
+      Array.isArray(r.devices) ? r.devices : Array.isArray(r.items) ? r.items : []
+    ) as Device[];
+    const total = typeof r.total === "number" ? r.total : devices.length;
 
     return {
       ok: true,
@@ -114,8 +113,7 @@ const devices = (Array.isArray(r.devices) ? r.devices : Array.isArray(r.items) ?
     return {
       ok: false,
       status: 0,
-      message:
-        "Não foi possível conectar ao backend. Verifique sua conexão e tente novamente.",
+      message: "Não foi possível conectar ao backend. Verifique sua conexão e tente novamente.",
       errorCode: "network",
       devices: [],
       total: 0,
@@ -132,9 +130,7 @@ const MOCK_DEVICES: Device[] = Array.from({ length: 47 }).map((_, i) => {
   const online = i % 3 !== 0;
   return {
     id: `dev-${i + 1}`,
-    name: shared
-      ? `Câmera compartilhada ${i + 1}`
-      : `Dispositivo ${i + 1}`,
+    name: shared ? `Câmera compartilhada ${i + 1}` : `Dispositivo ${i + 1}`,
     model: ["iM5 SC", "iM7 OUT", "EWS 1001", "EG 200", "RG 1200"][i % 5],
     mac: `AA:BB:CC:${String(i).padStart(2, "0")}:${String((i * 7) % 100).padStart(2, "0")}:FF`,
     online,
@@ -142,9 +138,7 @@ const MOCK_DEVICES: Device[] = Array.from({ length: 47 }).map((_, i) => {
   };
 });
 
-async function mockListDevices(
-  req: ListDevicesRequest,
-): Promise<ListDevicesResponse> {
+async function mockListDevices(req: ListDevicesRequest): Promise<ListDevicesResponse> {
   await new Promise((r) => setTimeout(r, 400));
 
   if (!req.token.trim()) {
