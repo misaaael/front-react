@@ -212,7 +212,12 @@ function Results({
   onRefresh: () => void;
   onReset: () => void;
 }) {
-  const devices = result?.devices ?? [];
+  const devices =
+  result && Array.isArray(result.devices)
+    ? result.devices
+    : result && Array.isArray((result as any).items)
+      ? ((result as any).items as Device[])
+      : [];
 
   return (
     <div className="space-y-6">
