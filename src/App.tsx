@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
   listDevices,
@@ -8,21 +7,7 @@ import {
   type ErrorCode,
 } from "@/services/devicesApi";
 
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Casa Inteligente • Dispositivos" },
-      {
-        name: "description",
-        content:
-          "Console para listar dispositivos da plataforma Open Casa Inteligente.",
-      },
-    ],
-  }),
-  component: Index,
-});
-
-function Index() {
+export default function App() {
   const [token, setToken] = useState("");
   const [origin, setOrigin] = useState<Origin>("all");
   const [page, setPage] = useState(1);
