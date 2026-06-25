@@ -21,10 +21,10 @@ jobs:
       contents: read
 
     env:
-      AWS_REGION: us-east-1
-      S3_BUCKET: case-intelbras-frontend-533267264899
-      CLOUDFRONT_DISTRIBUTION_ID: E2E324C9WD97G0
-      VITE_API_BASE_URL: ""
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      S3_BUCKET: ${{ vars.S3_BUCKET }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
 
     steps:
       - name: Checkout do código
@@ -45,7 +45,7 @@ jobs:
       - name: Configurar credenciais AWS via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::533267264899:role/case-intelbras-github-actions-frontend-role
+          role-to-assume: ${{ vars.AWS_GITHUB_ACTIONS_FRONTEND_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy para S3
