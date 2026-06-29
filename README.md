@@ -15,6 +15,7 @@ Frontend desenvolvido em React + Vite.
 - React
 - TypeScript
 - Vite
+- Cloudflare Turnstile
 
 ---
 
