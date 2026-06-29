@@ -58,6 +58,23 @@ O frontend consome a API do backend através da variável:
 ```
 VITE_API_BASE_URL
 ```
+---
+
+## Turnstile
+
+O frontend possui integração com o Cloudflare Turnstile para validação contra bots.
+
+Por padrão, durante o desenvolvimento local, ele pode permanecer desabilitado através da variável:
+
+```env
+VITE_TURNSTILE_ENABLED=false
+```
+
+Em produção, basta informar a `VITE_TURNSTILE_SITE_KEY` e habilitar:
+
+```env
+VITE_TURNSTILE_ENABLED=true
+```
 
 ---
 
