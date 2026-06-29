@@ -6,9 +6,11 @@ import {
   type Origin,
   type ErrorCode,
 } from "@/services/devicesApi";
+import { TurnstileCaptcha } from "@/components/TurnstileCaptcha";
 
 export default function App() {
   const [token, setToken] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
   const [origin, setOrigin] = useState<Origin>("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -16,21 +18,24 @@ export default function App() {
   const [result, setResult] = useState<ListDevicesResponse | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
+  const TURNSTILE_ENABLED =
+    import.meta.env.VITE_TURNSTILE_ENABLED !== "false";
+
   async function run(nextPage = page, nextOrigin = origin, nextSize = pageSize) {
     if (!token.trim()) return;
+
+    if (TURNSTILE_ENABLED && !turnstileToken) return;
 
     setLoading(true);
 
     try {
       const data = await listDevices({
         token: token.trim(),
+        turnstileToken: TURNSTILE_ENABLED ? turnstileToken : "",
         page: nextPage,
         pageSize: nextSize,
         origin: nextOrigin,
       });
-
-      console.log("DATA:", data);
-      console.log("DEVICES:", data.devices?.length);
 
       setResult(data);
       setSubmitted(true);
@@ -49,6 +54,7 @@ export default function App() {
     setSubmitted(false);
     setResult(null);
     setToken("");
+    setTurnstileToken("");
     setPage(1);
   }
 
@@ -60,6 +66,9 @@ export default function App() {
           <TokenForm
             token={token}
             setToken={setToken}
+            turnstileToken={turnstileToken}
+            setTurnstileToken={setTurnstileToken}
+            turnstileEnabled={TURNSTILE_ENABLED}
             loading={loading}
             onSubmit={onSubmit}
           />
@@ -102,7 +111,15 @@ function Header() {
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand text-brand-foreground">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M3 11l9-8 9 8" />
               <path d="M5 10v10h14V10" />
               <path d="M10 20v-6h4v6" />
@@ -128,11 +145,17 @@ function Header() {
 function TokenForm({
   token,
   setToken,
+  turnstileToken,
+  setTurnstileToken,
+  turnstileEnabled,
   loading,
   onSubmit,
 }: {
   token: string;
   setToken: (v: string) => void;
+  turnstileToken: string;
+  setTurnstileToken: (v: string) => void;
+  turnstileEnabled: boolean;
   loading: boolean;
   onSubmit: (e: FormEvent) => void;
 }) {
@@ -143,9 +166,11 @@ function TokenForm({
           Conecte sua conta
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Cole o <span className="font-medium text-foreground">token temporário</span> gerado em{" "}
-          <span className="font-mono text-xs">Contas → Token Temporário</span> na
-          plataforma Open Casa Inteligente.
+          Cole o{" "}
+          <span className="font-medium text-foreground">token temporário</span>{" "}
+          gerado em{" "}
+          <span className="font-mono text-xs">Contas → Token Temporário</span>{" "}
+          na plataforma Open Casa Inteligente.
         </p>
       </div>
 
@@ -167,13 +192,25 @@ function TokenForm({
             required
           />
           <p className="text-xs text-muted-foreground">
-            O token fica apenas em memória neste navegador e é enviado somente para o backend configurado.
+            O token fica apenas em memória neste navegador e é enviado somente
+            para o backend configurado.
           </p>
         </div>
 
+        {turnstileEnabled && (
+          <TurnstileCaptcha
+            onVerify={setTurnstileToken}
+            onExpire={() => setTurnstileToken("")}
+          />
+        )}
+
         <button
           type="submit"
-          disabled={loading || !token.trim()}
+          disabled={
+            loading ||
+            !token.trim() ||
+            (turnstileEnabled && !turnstileToken)
+          }
           className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-brand-foreground transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? (
@@ -213,11 +250,11 @@ function Results({
   onReset: () => void;
 }) {
   const devices =
-  result && Array.isArray(result.devices)
-    ? result.devices
-    : result && Array.isArray((result as any).items)
-      ? ((result as any).items as Device[])
-      : [];
+    result && Array.isArray(result.devices)
+      ? result.devices
+      : result && Array.isArray((result as any).items)
+        ? ((result as any).items as Device[])
+        : [];
 
   return (
     <div className="space-y-6">
@@ -259,7 +296,7 @@ function Results({
             onChange={(e) => onChangePageSize(Number(e.target.value))}
             className="rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground"
           >
-            {[5,10, 20, 50].map((n) => (
+            {[5, 10, 20, 50].map((n) => (
               <option key={n} value={n}>
                 {n}
               </option>
@@ -305,10 +342,12 @@ function FilterChips({
     { value: "linked", label: "Vinculados" },
     { value: "shared", label: "Compartilhados" },
   ];
+
   return (
     <div className="flex flex-wrap gap-1.5">
       {opts.map((o) => {
         const active = origin === o.value;
+
         return (
           <button
             key={o.value}
@@ -352,38 +391,23 @@ function DeviceCard({ device }: { device: Device }) {
     "—";
 
   const serial =
-    (device.serial as string) ||
-    (device.ns as string) ||
-    (device.id as string) ||
-    "";
+    (device.serial as string) || (device.ns as string) || (device.id as string) || "";
 
-  const version =
-    (device.version as string) ||
-    (device.versao as string) ||
-    "";
+  const version = (device.version as string) || (device.versao as string) || "";
 
   const parentDevice =
-    (device.parentDevice as string) ||
-    (device.dispositivoPai as string) ||
-    "";
+    (device.parentDevice as string) || (device.dispositivoPai as string) || "";
 
   const lastOnlineAt =
-    (device.lastOnlineAt as string) ||
-    (device.ultimaVezOnline as string) ||
-    "";
+    (device.lastOnlineAt as string) || (device.ultimaVezOnline as string) || "";
 
-  const isSubDevice =
-    device.isSubDevice === true ||
-    device.subdispositivo === true;
+  const isSubDevice = device.isSubDevice === true || device.subdispositivo === true;
 
   const updateAvailable =
-    device.updateAvailable === true ||
-    device.atualizacaoDisponivel === true;
+    device.updateAvailable === true || device.atualizacaoDisponivel === true;
 
   const isOnline =
-    device.online === true ||
-    device.status === "online" ||
-    device.estado === "online";
+    device.online === true || device.status === "online" || device.estado === "online";
 
   const isShared =
     device.shared === true ||
@@ -464,9 +488,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 function formatIntelbrasDate(value: string) {
   if (!value) return "";
 
-  const match = value.match(
-    /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/,
-  );
+  const match = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/);
 
   if (!match) return value;
 
@@ -477,7 +499,15 @@ function formatIntelbrasDate(value: string) {
 
 function DeviceIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="3" y="4" width="18" height="12" rx="2" />
       <path d="M8 20h8" />
       <path d="M12 16v4" />
@@ -549,13 +579,16 @@ function ErrorState({
   const title =
     code === "unauthorized"
       ? "Token inválido ou expirado"
-      : code === "network"
-        ? "Falha de conexão com o backend"
-        : code === "server"
-          ? "Backend indisponível"
-          : code === "unexpected"
-            ? "Resposta inesperada do backend"
-            : "Não foi possível listar os dispositivos";
+      : code === "captcha"
+        ? "Falha na verificação de segurança"
+        : code === "network"
+          ? "Falha de conexão com o backend"
+          : code === "server"
+            ? "Backend indisponível"
+            : code === "unexpected"
+              ? "Resposta inesperada do backend"
+              : "Não foi possível listar os dispositivos";
+
   return (
     <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6">
       <div className="flex items-start gap-3">
@@ -590,8 +623,20 @@ function ErrorState({
 function Spinner() {
   return (
     <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4" />
-      <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeOpacity="0.25"
+        strokeWidth="4"
+      />
+      <path
+        d="M22 12a10 10 0 0 1-10 10"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

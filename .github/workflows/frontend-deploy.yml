@@ -38,6 +38,11 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Criar arquivo .env de produção
+        run: |
+          echo "VITE_TURNSTILE_ENABLED=${{ vars.VITE_TURNSTILE_ENABLED }}" >> .env
+          echo "VITE_TURNSTILE_SITE_KEY=${{ vars.VITE_TURNSTILE_SITE_KEY }}" >> .env
+
       - name: Build React
         run: npm run build
 
