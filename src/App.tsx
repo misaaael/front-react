@@ -24,14 +24,15 @@ export default function App() {
   async function run(nextPage = page, nextOrigin = origin, nextSize = pageSize) {
     if (!token.trim()) return;
 
-    if (TURNSTILE_ENABLED && !turnstileToken) return;
+    if (TURNSTILE_ENABLED && !submitted && !turnstileToken) return;
 
     setLoading(true);
 
     try {
       const data = await listDevices({
         token: token.trim(),
-        turnstileToken: TURNSTILE_ENABLED ? turnstileToken : "",
+        turnstileToken:
+          TURNSTILE_ENABLED && !submitted ? turnstileToken : "",
         page: nextPage,
         pageSize: nextSize,
         origin: nextOrigin,
@@ -39,6 +40,7 @@ export default function App() {
 
       setResult(data);
       setSubmitted(true);
+      setTurnstileToken("");
     } finally {
       setLoading(false);
     }
