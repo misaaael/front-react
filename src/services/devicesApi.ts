@@ -1,7 +1,12 @@
 export type Origin = "all" | "linked" | "shared";
 
-export type ErrorCode = "unauthorized" | "network" | "server" | "unexpected";
-
+export type ErrorCode =
+  | "unauthorized"
+  | "captcha"
+  | "network"
+  | "server"
+  | "unexpected";
+  
 export type Device = Record<string, unknown> & {
   id?: string | number;
   name?: string;
